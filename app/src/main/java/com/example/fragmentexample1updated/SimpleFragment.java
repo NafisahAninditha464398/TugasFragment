@@ -25,6 +25,31 @@ public class SimpleFragment extends Fragment {
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
 
+    private static final String CHOICE_PARAM = "choice-param";
+    private static final int YES = 0;
+    private static final int NO = 1;
+    private static final int NONE = 2;
+
+    private int mCurrentChoice = NONE;
+    private OnFragmentInteractionListener mListener;
+
+    interface OnFragmentInteractionListener {
+        void OnRadioButtonChoiceChecked(int choice);
+    }
+
+
+    @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        if (context instanceof OnFragmentInteractionListener){
+            mListener = (OnFragmentInteractionListener) context;
+        }
+        else {
+            throw new ClassCastException(context.toString()
+                    + getResources().getString(R.string.exception_message));
+        }
+    }
+
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
@@ -59,6 +84,9 @@ public class SimpleFragment extends Fragment {
 
     public static SimpleFragment newInstance(int choice) {
         SimpleFragment fragment = new SimpleFragment();
+        Bundle args = new Bundle();
+        args.putInt(CHOICE_PARAM, choice);
+        fragment.setArguments(args);
         return fragment;
     }
 
@@ -76,6 +104,41 @@ public class SimpleFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
 
-        return inflater.inflate(R.layout.fragment_simple, container, false);
+        View view = inflater.inflate(R.layout.fragment_simple, container, false);
+        TextView questionTextView = view.findViewById(R.id.fragment_header);
+
+        RadioGroup radioGroup = view.findViewById(R.id.radio_group);
+
+        if(getArguments().containsKey(CHOICE_PARAM)) {
+            mCurrentChoice = getArguments().getInt(CHOICE_PARAM);
+
+            if(mCurrentChoice != NONE) {
+                radioGroup.check(radioGroup.getChildAt(mCurrentChoice).getId());
+            }
+        }
+        radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup radioGroup, int i) {
+                RadioButton checkedButton = radioGroup.findViewById(i);
+                int idx = radioGroup.indexOfChild(checkedButton);
+
+                if(idx == YES) {
+                    questionTextView.setText(R.string.yes_message);
+                    mCurrentChoice = YES;
+                    mListener.OnRadioButtonChoiceChecked(YES);
+                }
+                else if(idx == NO) {
+                    questionTextView.setText(R.string.no_message);
+                    mCurrentChoice = NO;
+                    mListener.OnRadioButtonChoiceChecked(NO);
+                }
+                else {
+                    mCurrentChoice = NONE;
+                    mListener.OnRadioButtonChoiceChecked(NONE);
+                }
+            }
+        });
+
+        return view;
     }
 }
